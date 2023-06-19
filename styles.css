@@ -1,0 +1,63 @@
+*{
+    margin: 0px;
+    padding: 20px;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    list-style-type: none
+    
+}
+
+.header {
+    height: 80px;
+    background-color: blueviolet;
+}
+
+.main_content {
+    display: flex;
+
+}
+
+.main_labels {
+    width: 300px;
+    height: 800px;
+    background-color: aqua;
+}
+
+.main_messList {
+    width: 400px;
+    height: 800px;
+    background-color: lawngreen;
+}
+
+.maincontent {
+    width: 1000px;
+    height: 800px;
+    background-color: khaki;
+}
+
+
+.sendEmailSec{
+    background-color: cadetblue;
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    display: block;
+}
+
+.form-group {
+    /* width: 300px;    */
+}
+
+.form-control {
+    width: 400px;
+}
+
+
+.hidden {
+    display: none;
+}
+
+.disabled {
+    cursor:default;
+    opacity: 0.7;
+}
