@@ -164,18 +164,60 @@ function listMessages() {
         'labelIds': 'INBOX',
         'maxResults': 10
     })
-    
+
     request.execute(function (response) {
         var messages = response.result.messages;
         if (messages && messages.length > 0) {
-            
+            messages.forEach((message, index) => {
+                gapi.client.gmail.users.messages.get({
+                    'userId': 'me',
+                    'id': message.id
+                }).then(function (response) {
+                    var message = response.result;
+                    // console.log((message))
+                    var messageContent = parseMessageContent(message); // Parse the message content
+                    // console.log("content", JSON.stringify(messageContent, null, 2))
+                    // var messageObject = JSON.stringify(messageContent, null, 2);
+                    mails.push(messageContent);
+                    console.log(mails)
+
+                    var li = document.createElement('li');
+
+                    // Sử dụng textContent để gán nội dung vào phần tử li
+                    li.textContent = `${messageContent.sender} - ${messageContent.subject}`;
+
+                    li.dataset.index = String(mails.length - 1);
+
+                    // Thêm thuộc tính có thể bấm cho phần tử li
+                    li.style.cursor = 'pointer';
+
+                    // Gán sự kiện click cho phần tử li
+                    // li.addEventListener('click',  () => {
+                    //     // Xử lý sự kiện khi phần tử li được bấm
+                    //     console.log('Clicked on sender:', this.dataset.index);
+                    // });
+
+                    li.onclick = function () {
+                        let index = this.dataset.index
+                        console.log('Clicked on sender:', this.dataset.index);
+                        maincontent.innerHTML = "<p>" + mails[index].body + "</p>"
+                    }
+
+                    // Thêm phần tử li vào một phần tử gốc
+                    maiList.appendChild(li);
+
+
+                }).catch(function (error) {
+                    console.error('Error getting message: ', error);
+                });
+            });
 
 
 
-            for (let i = messages.length - 1; i >= 0; i--) {
-                // Get the ID of the first message
-                getMessage(messages[i].id, i); // Get the content of the message
-            }
+            // for (let i = messages.length - 1; i >= 0; i--) {
+            //     // Get the ID of the first message
+            //     getMessage(messages[i].id, i); // Get the content of the message
+            // }
 
         } else {
             maiList.innerHTML = "<p> No messages found.</p>";
@@ -247,26 +289,17 @@ function parseMessageContent(message) {
         }
     }
 
-    if (message.payload.parts && message.payload.parts.length > 0) {
-        body = decodeURIComponent(
-            escape(window.atob(message.payload.parts[0].body.data.replace(/-/g, "+").replace(/_/g, "/")))
-        );
-    }
-
-    console.log(message);
 
     body = getBody(message.payload)
-
 
     return {
         subject: subject,
         sender: sender,
         body: body
-    };
+    };  
 }
 
 
-//nhap
 
 function getBody(message) {
     var encodedBody = '';
@@ -293,8 +326,6 @@ function getHTMLPart(arr) {
     }
     return '';
 }
-//nhap done
-
 
 
 createMailBtn.onclick = function () {
