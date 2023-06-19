@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Gmail API Quickstart</title>
+  <link rel="stylesheet" href="./styles.css">
+  <meta charset="utf-8" />
+</head>
+
+<body>
+
+
+
+  <div class="main">
+    <header class="header">
+      <!--Add buttons to initiate auth sequence and sign out-->
+      <button id="createMail_button">Create New Mail</button>
+      <button id="authorize_button">Authorize</button>
+      <button id="signout_button" onclick="handleSignoutClick()">Sign Out</button>
+
+    </header>
+
+    <section class="main_content">
+      <nav class="main_labels">
+        <ul id="labels_section">
+
+        </ul>
+      </nav>
+      <nav class="main_messList">
+        <ul id="mail_list">
+
+        </ul>
+      </nav>
+
+      <div class="maincontent">
+
+      </div>
+    </section>
+
+    <div class="sendEmailSec hidden">
+      <form onsubmit="return sendEmail();">
+        <div class="modal-body">
+          <div class="form-group">
+            <input type="email" class="form-control" id="compose-to" placeholder="To" required />
+          </div>
+
+          <div class="form-group">
+            <input type="text" class="form-control" id="compose-subject" placeholder="Subject" required />
+          </div>
+
+          <div class="form-group">
+            <textarea class="form-control" id="compose-message" placeholder="Message" rows="10" required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id = "close-button" class="btn btn-default" >Close</button>
+          <button type="submit" id="send-button" class="btn btn-primary">Send</button>
+        </div>
+      </form>
+    </div>
+
+
+  </div>
+
+
+
+
+
+
+  <pre id="content" style="white-space: pre-wrap;"></pre>
+
+
+  <script src="./main.js"></script>
+  <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+  <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+
+</body>
+
+</html>
