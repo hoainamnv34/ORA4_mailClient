@@ -65,7 +65,6 @@ function gisLoaded() {
     tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
         scope: SCOPES,
-        immediate: true,
         callback: '', // defined later
     });
     gisInited = true;
@@ -160,13 +159,19 @@ async function listLabels() {
 }
 
 function listMessages() {
-    gapi.client.gmail.users.messages.list({
+    var request = gapi.client.gmail.users.messages.list({
         'userId': 'me',
         'labelIds': 'INBOX',
         'maxResults': 10
-    }).then(function (response) {
+    })
+    
+    request.execute(function (response) {
         var messages = response.result.messages;
         if (messages && messages.length > 0) {
+            
+
+
+
             for (let i = messages.length - 1; i >= 0; i--) {
                 // Get the ID of the first message
                 getMessage(messages[i].id, i); // Get the content of the message
@@ -200,7 +205,7 @@ function getMessage(messageId, index) {
         var li = document.createElement('li');
 
         // Sử dụng textContent để gán nội dung vào phần tử li
-        li.textContent = `${messageContent.sender.slice(1, -1)} - ${messageContent.subject}`;
+        li.textContent = `${messageContent.sender} - ${messageContent.subject}`;
 
         li.dataset.index = String(mails.length - 1);
 
@@ -221,12 +226,6 @@ function getMessage(messageId, index) {
 
         // Thêm phần tử li vào một phần tử gốc
         maiList.appendChild(li);
-
-
-
-        // maiList.innerHTML = maiList.innerHTML + "<li>"  + messageContent.sender + "</li> \n" ;
-        // `<li> ${messageContent.sender.slice(1,-1)} - ${messageContent.subject} </li> \n`
-        // console.log(maiList.innerHTML);
 
 
     }).catch(function (error) {
@@ -256,7 +255,7 @@ function parseMessageContent(message) {
 
     console.log(message);
 
-
+    body = getBody(message.payload)
 
 
     return {
@@ -266,6 +265,35 @@ function parseMessageContent(message) {
     };
 }
 
+
+//nhap
+
+function getBody(message) {
+    var encodedBody = '';
+    if (typeof message.parts === 'undefined') {
+        encodedBody = message.body.data;
+    }
+    else {
+        encodedBody = getHTMLPart(message.parts);
+    }
+    encodedBody = encodedBody.replace(/-/g, '+').replace(/_/g, '/').replace(/\s/g, '');
+    return decodeURIComponent(escape(window.atob(encodedBody)));
+}
+
+function getHTMLPart(arr) {
+    for (var x = 0; x <= arr.length; x++) {
+        if (typeof arr[x].parts === 'undefined') {
+            if (arr[x].mimeType === 'text/html') {
+                return arr[x].body.data;
+            }
+        }
+        else {
+            return getHTMLPart(arr[x].parts);
+        }
+    }
+    return '';
+}
+//nhap done
 
 
 
@@ -287,7 +315,7 @@ function sendEmail() {
         composeTidy
     );
 
-      return false;
+    return false;
 }
 
 function sendMessage(headers_obj, message, callback) {
@@ -316,7 +344,7 @@ function composeTidy() {
 
     $("#compose-to").value = ''
     $("#compose-subject").value = ''
-    $("#compose-message").value = ''    
+    $("#compose-message").value = ''
     $('#send-button').classList.remove('disabled');
 }
 
