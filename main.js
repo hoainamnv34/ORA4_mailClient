@@ -14,7 +14,7 @@ const signoutBtn = $('#signout_button')
 const labelsSec = $('#labels_section')
 const maiList = $('#mail_list')
 const maincontent = $(".maincontent");
-const senMailSec = $(".sendEmailSec")
+const sendMailSec = $(".sendEmailSec")
 const closeBtn = $("#close-button")
 
 
@@ -247,24 +247,8 @@ function getHTMLPart(arr) {
 
 
 createMailBtn.onclick = function () {
-    senMailSec.classList.remove("hidden");
+    sendMailSec.classList.remove("hidden");
 }
-
-
-function sendEmail() {
-    $('#send-button').classList.add("disabled")
-    sendMessage(
-        {
-            'To': $("#compose-to").value,
-            'Subject': $("#compose-subject").value
-        },
-        $("#compose-message").value,
-        composeTidy
-    );
-
-    return false;
-}
-
 
 
 //feature/send_attachments
@@ -323,10 +307,15 @@ function sendMail() {
             request.execute(composeTidy);
         };
     } else {
-        alert("xit")
+        sendMessage(
+            {
+                'To': $("#compose-to").value,
+                'Subject': $("#compose-subject").value
+            },
+            $("#compose-message").value,
+            composeTidy
+        );
     }
-
-
 };
 
 
@@ -339,5 +328,25 @@ function composeTidy() {
     $("#compose-message").value = ''
     document.getElementById("file-input").value = "";
     $('#send-button').classList.remove('disabled');
-   
+
+}
+
+
+
+function sendMessage(headers_obj, message, callback) {
+    var email = '';
+
+    for (var header in headers_obj)
+        email += header += ": " + headers_obj[header] + "\r\n";
+
+    email += "\r\n" + message;
+
+    var sendRequest = gapi.client.gmail.users.messages.send({
+        'userId': 'me',
+        'resource': {
+            'raw': window.btoa(email).replace(/\+/g, '-').replace(/\//g, '_')
+        }
+    });
+
+    return sendRequest.execute(callback);
 }
