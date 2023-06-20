@@ -11,7 +11,6 @@ const $$ = document.querySelectorAll.bind(document);
 const createMailBtn = $('#createMail_button')
 const authorizeBtn = $('#authorize_button')
 const signoutBtn = $('#signout_button')
-const labelsSec = $('#labels_section')
 const maiList = $('#mail_list')
 const maincontent = $(".maincontent");
 const sendMailSec = $(".sendEmailSec")
@@ -29,7 +28,8 @@ const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/gmail/v1/res
 
 // Authorization scopes required by the API; multiple scopes can be
 // included, separated by spaces.
-const SCOPES = 'https://www.googleapis.com/auth/gmail.compose'
+// const SCOPES = 'https://www.googleapis.com/auth/gmail.compose'
+const SCOPES = "https://mail.google.com/";
 
 let tokenClient;
 let gapiInited = false;
@@ -119,12 +119,25 @@ signoutBtn.onclick = function handleSignoutClick() {
     if (token !== null) {
         google.accounts.oauth2.revoke(token.access_token);
         gapi.client.setToken('');
-        labels.innerText = '';
         authorizeBtn.innerText = 'Authorize';
         signoutBtn.style.visibility = 'hidden';
+        createMailBtn.style.visibility = 'hidden'
+
+        maiList.innerHTML = '';
+        mails = [];
+        maincontent.innerHTML = ''
     }
 }
 
+
+closeBtn.onclick = function () {
+    senMailSec.classList.add("hidden");
+    $("#compose-to").value = '';
+    $("#compose-subject").value = '';
+    $("#compose-message").value = '';
+    document.getElementById("file-input").value = "";
+
+}
 
 
 
@@ -135,6 +148,9 @@ signoutBtn.onclick = function handleSignoutClick() {
 
 
 async function listMessages() {
+    maiList.innerHTML = '';
+    mails = [];
+    maincontent.innerHTML = ''
     var request = gapi.client.gmail.users.messages.list({
         'userId': 'me',
         'labelIds': 'INBOX',
@@ -144,7 +160,7 @@ async function listMessages() {
     request.execute(function (response) {
         var messages = response.result.messages;
         if (messages && messages.length > 0) {
-            messages.forEach((message, index) => {
+            messages.forEach((message) => {
                 gapi.client.gmail.users.messages.get({
                     'userId': 'me',
                     'id': message.id
@@ -158,6 +174,7 @@ async function listMessages() {
                     console.log(mails)
 
                     var li = document.createElement('li');
+                    li.classList.add("mail_item");
 
                     // Sử dụng textContent để gán nội dung vào phần tử li
                     li.textContent = `${messageContent.sender} - ${messageContent.subject}`;
@@ -261,11 +278,12 @@ function sendMail() {
     var subject = $("#compose-subject").value;
     var message = $("#compose-message").value
     var file = document.getElementById("file-input").files[0];
+    console.log(file);
 
     if (file) {
         var reader = new FileReader();
         reader.readAsDataURL(file);
-        reader.onload = function () {
+        reader.onloadend = function () {
             var attachment = reader.result.split(",")[1];
             var boundary = "my_email_boundary";
             var nl = "\r\n";
@@ -275,6 +293,7 @@ function sendMail() {
             var messageBody = nl + nl + message;
             var mime = [
                 "MIME-Version: 1.0",
+                "From: muougiapquetui@gmail.com",
                 "To: " + to,
                 "Subject: " + subject,
                 'Content-Type: multipart/mixed; boundary="' + boundary + '"',
@@ -283,11 +302,12 @@ function sendMail() {
                 "--" + boundary,
                 'Content-Type: text/plain; charset="UTF-8"',
                 "Content-Transfer-Encoding: 7bit",
-                "",
+                "",                 
                 messageBody,
                 "",
                 "--" + boundary,
                 "Content-Type: " + attachmentType + '; name="' + attachmentName + '"',
+                "MIME-Version: 1.0",
                 'Content-Disposition: attachment; filename="' + attachmentName + '"',
                 "Content-Transfer-Encoding: base64",
                 "",
@@ -296,15 +316,15 @@ function sendMail() {
                 "--" + boundary + "--",
             ].join(nl);
 
-            var encodedMessage = btoa(mime + nl + nl + body);
-
             var request = gapi.client.gmail.users.messages.send({
                 userId: "me",
                 resource: {
-                    raw: encodedMessage,
+                    raw: window.btoa(mime + nl + nl + body).replace(/\+/g, '-').replace(/\//g, '_')
                 },
             });
             request.execute(composeTidy);
+
+
         };
     } else {
         sendMessage(
@@ -349,4 +369,9 @@ function sendMessage(headers_obj, message, callback) {
     });
 
     return sendRequest.execute(callback);
+
+
+    
 }
+
+
