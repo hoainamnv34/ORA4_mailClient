@@ -21,11 +21,7 @@
     </header>
 
     <section class="main_content">
-      <nav class="main_labels">
-        <ul id="labels_section">
-
-        </ul>
-      </nav>
+  
       <nav class="main_messList">
         <ul id="mail_list">
 
@@ -38,7 +34,7 @@
     </section>
 
     <div class="sendEmailSec hidden">
-      <form onsubmit = "sendMail()">
+      <form onsubmit="sendMail()">
         <div class="modal-body">
           <div class="form-group">
             <input type="email" class="form-control" id="compose-to" placeholder="To" required />
@@ -53,12 +49,33 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" id = "close-button" class="btn btn-default" >Close</button>
-          <button type="submit" id="send-button" class="btn btn-primary" >Send</button>
+          <button type="button" id="close-button" class="btn btn-default">Close</button>
+          <button type="submit" id="send-button" class="btn btn-primary">Send</button>
           <!-- <input type="file" id="file-input"> -->
           <input type="file" name="file" id="file-input" multiple>
         </div>
       </form>
+
+      <div class="loader">
+        <div class="loader-inner">
+          <div class="loader-line-wrap">
+            <div class="loader-line"></div>
+          </div>
+          <div class="loader-line-wrap">
+            <div class="loader-line"></div>
+          </div>
+          <div class="loader-line-wrap">
+            <div class="loader-line"></div>
+          </div>
+          <div class="loader-line-wrap">
+            <div class="loader-line"></div>
+          </div>
+          <div class="loader-line-wrap">
+            <div class="loader-line"></div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
 

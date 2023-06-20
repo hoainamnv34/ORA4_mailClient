@@ -19,6 +19,7 @@ const closeBtn = $("#close-button")
 
 
 
+
 // TODO(developer): Set to client ID and API key from the Developer Console
 const CLIENT_ID = '652378424049-26p6uf7uve24vm8v87l5tr59dapnqtar.apps.googleusercontent.com';
 const API_KEY = 'AIzaSyAWQIade7F8wMJQtficOLvprEjv8d7sIOU';
@@ -37,6 +38,7 @@ let gisInited = false;
 createMailBtn.style.visibility = 'hidden';
 authorizeBtn.style.visibility = 'hidden';
 signoutBtn.style.visibility = 'hidden';
+$('.loader').classList.add("hidden")
 
 /**
  * Callback after api.js is loaded.
@@ -99,7 +101,7 @@ authorizeBtn.onclick = function handleAuthClick() {
         createMailBtn.style.visibility = 'visible';
         signoutBtn.style.visibility = 'visible';
         authorizeBtn.innerText = 'Refresh';
-        await listLabels();
+        await listMessages();
     };
 
     if (gapi.client.getToken() === null) {
@@ -131,34 +133,8 @@ signoutBtn.onclick = function handleSignoutClick() {
  * are found an appropriate message is printed.
  */
 
-async function listLabels() {
-    let response;
-    try {
-        response = await gapi.client.gmail.users.labels.list({
-            'userId': 'me',
-        });
-    } catch (err) {
-        labelsSec.innerText = err.message;
 
-        return;
-    }
-
-    const labels = response.result.labels;
-    if (!labels || labels.length == 0) {
-        labelsSec.innerText = 'No labels found.';
-        return;
-    }
-    // Flatten to string to display
-    const output = labels.reduce(
-        (str, label) => str + `<li> ${label.name} </li>\n`,
-        'Labels:\n');
-    // console.log(output)
-    labelsSec.innerHTML = output;
-    // nam
-    listMessages();
-}
-
-function listMessages() {
+async function listMessages() {
     var request = gapi.client.gmail.users.messages.list({
         'userId': 'me',
         'labelIds': 'INBOX',
@@ -275,8 +251,6 @@ createMailBtn.onclick = function () {
 }
 
 
-
-
 function sendEmail() {
     $('#send-button').classList.add("disabled")
     sendMessage(
@@ -295,12 +269,15 @@ function sendEmail() {
 
 //feature/send_attachments
 function sendMail() {
-    event.preventDefault();
+    window.event.preventDefault();
+    $('#send-button').classList.add("disabled");
+    $('.loader').classList.remove("hidden")
+
     var to = $("#compose-to").value;
     var subject = $("#compose-subject").value;
     var message = $("#compose-message").value
     var file = document.getElementById("file-input").files[0];
-    
+
     if (file) {
         var reader = new FileReader();
         reader.readAsDataURL(file);
@@ -343,19 +320,24 @@ function sendMail() {
                     raw: encodedMessage,
                 },
             });
-            request.execute(function (message) {
-                console.log("Đã gửi mail:", message);
-                alert("Đã gửi mail!");
-                // Gỡ bỏ form sau khi đã gửi mail thành công
-                $("#compose-to").value = ''
-                $("#compose-subject").value = ''
-                $("#compose-message").value = ''
-                document.getElementById("file-input").value = "";
-            });
+            request.execute(composeTidy);
         };
-    }else {
+    } else {
         alert("xit")
     }
 
 
 };
+
+
+function composeTidy() {
+    console.log("Đã gửi mail:");
+    $('.loader').classList.add("hidden")
+    alert("Đã gửi mail!");
+    $("#compose-to").value = ''
+    $("#compose-subject").value = ''
+    $("#compose-message").value = ''
+    document.getElementById("file-input").value = "";
+    $('#send-button').classList.remove('disabled');
+   
+}
