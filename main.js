@@ -28,7 +28,7 @@ const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/gmail/v1/res
 
 // Authorization scopes required by the API; multiple scopes can be
 // included, separated by spaces.
-const SCOPES = 'https://mail.google.com/ https://www.googleapis.com/auth/gmail.addons.current.message.action https://www.googleapis.com/auth/gmail.addons.current.message.metadata https://www.googleapis.com/auth/gmail.addons.current.message.readonly https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.readonly'
+const SCOPES = 'https://www.googleapis.com/auth/gmail.compose'
 
 let tokenClient;
 let gapiInited = false;
@@ -191,11 +191,7 @@ function listMessages() {
                     // Thêm thuộc tính có thể bấm cho phần tử li
                     li.style.cursor = 'pointer';
 
-                    // Gán sự kiện click cho phần tử li
-                    // li.addEventListener('click',  () => {
-                    //     // Xử lý sự kiện khi phần tử li được bấm
-                    //     console.log('Clicked on sender:', this.dataset.index);
-                    // });
+                    maincontent.innerHTML = "<p>" + mails[0].body + "</p>"
 
                     li.onclick = function () {
                         let index = this.dataset.index
@@ -212,68 +208,14 @@ function listMessages() {
                 });
             });
 
-
-
-            // for (let i = messages.length - 1; i >= 0; i--) {
-            //     // Get the ID of the first message
-            //     getMessage(messages[i].id, i); // Get the content of the message
-            // }
-
         } else {
             maiList.innerHTML = "<p> No messages found.</p>";
         }
 
-        // getMessage("188c54a78d178d10");
 
-    }).catch(function (error) {
-        console.error('Error listing messages: ', error);
-    });
+    })
 }
 
-// Get the content of a specific message
-function getMessage(messageId, index) {
-    gapi.client.gmail.users.messages.get({
-        'userId': 'me',
-        'id': messageId
-    }).then(function (response) {
-        var message = response.result;
-        // console.log((message))
-        var messageContent = parseMessageContent(message); // Parse the message content
-        // console.log("content", JSON.stringify(messageContent, null, 2))
-        // var messageObject = JSON.stringify(messageContent, null, 2);
-        mails.push(messageContent);
-        console.log(mails)
-
-        var li = document.createElement('li');
-
-        // Sử dụng textContent để gán nội dung vào phần tử li
-        li.textContent = `${messageContent.sender} - ${messageContent.subject}`;
-
-        li.dataset.index = String(mails.length - 1);
-
-        // Thêm thuộc tính có thể bấm cho phần tử li
-        li.style.cursor = 'pointer';
-
-        // Gán sự kiện click cho phần tử li
-        // li.addEventListener('click',  () => {
-        //     // Xử lý sự kiện khi phần tử li được bấm
-        //     console.log('Clicked on sender:', this.dataset.index);
-        // });
-
-        li.onclick = function () {
-            let index = this.dataset.index
-            console.log('Clicked on sender:', this.dataset.index);
-            maincontent.innerHTML = "<p>" + mails[index].body + "</p>"
-        }
-
-        // Thêm phần tử li vào một phần tử gốc
-        maiList.appendChild(li);
-
-
-    }).catch(function (error) {
-        console.error('Error getting message: ', error);
-    });
-}
 
 // Parse the content of the message
 function parseMessageContent(message) {
@@ -296,7 +238,7 @@ function parseMessageContent(message) {
         subject: subject,
         sender: sender,
         body: body
-    };  
+    };
 }
 
 
@@ -349,33 +291,71 @@ function sendEmail() {
     return false;
 }
 
-function sendMessage(headers_obj, message, callback) {
-    var email = '';
 
-    for (var header in headers_obj)
-        email += header += ": " + headers_obj[header] + "\r\n";
 
-    email += "\r\n" + message;
+//feature/send_attachments
+function sendMail() {
+    event.preventDefault();
+    var to = $("#compose-to").value;
+    var subject = $("#compose-subject").value;
+    var message = $("#compose-message").value
+    var file = document.getElementById("file-input").files[0];
+    
+    if (file) {
+        var reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = function () {
+            var attachment = reader.result.split(",")[1];
+            var boundary = "my_email_boundary";
+            var nl = "\r\n";
+            var attachmentContent = btoa(attachment);
+            var attachmentName = file.name;
+            var attachmentType = file.type;
+            var messageBody = nl + nl + message;
+            var mime = [
+                "MIME-Version: 1.0",
+                "To: " + to,
+                "Subject: " + subject,
+                'Content-Type: multipart/mixed; boundary="' + boundary + '"',
+            ].join(nl);
+            var body = [
+                "--" + boundary,
+                'Content-Type: text/plain; charset="UTF-8"',
+                "Content-Transfer-Encoding: 7bit",
+                "",
+                messageBody,
+                "",
+                "--" + boundary,
+                "Content-Type: " + attachmentType + '; name="' + attachmentName + '"',
+                'Content-Disposition: attachment; filename="' + attachmentName + '"',
+                "Content-Transfer-Encoding: base64",
+                "",
+                attachmentContent,
+                "",
+                "--" + boundary + "--",
+            ].join(nl);
 
-    var sendRequest = gapi.client.gmail.users.messages.send({
-        'userId': 'me',
-        'resource': {
-            'raw': window.btoa(email).replace(/\+/g, '-').replace(/\//g, '_')
-        }
-    });
+            var encodedMessage = btoa(mime + nl + nl + body);
 
-    return sendRequest.execute(callback);
-}
+            var request = gapi.client.gmail.users.messages.send({
+                userId: "me",
+                resource: {
+                    raw: encodedMessage,
+                },
+            });
+            request.execute(function (message) {
+                console.log("Đã gửi mail:", message);
+                alert("Đã gửi mail!");
+                // Gỡ bỏ form sau khi đã gửi mail thành công
+                $("#compose-to").value = ''
+                $("#compose-subject").value = ''
+                $("#compose-message").value = ''
+                document.getElementById("file-input").value = "";
+            });
+        };
+    }else {
+        alert("xit")
+    }
 
-closeBtn.onclick = function () {
-    senMailSec.classList.add("hidden")
-}
 
-function composeTidy() {
-
-    $("#compose-to").value = ''
-    $("#compose-subject").value = ''
-    $("#compose-message").value = ''
-    $('#send-button').classList.remove('disabled');
-}
-
+};
