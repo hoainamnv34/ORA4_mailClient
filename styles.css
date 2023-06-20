@@ -1,6 +1,6 @@
 * {
     margin: 0px;
-    padding: 20px;
+    padding: 0x;
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
     list-style-type: none
@@ -9,6 +9,20 @@
 .header {
     height: 80px;
     background-color: blueviolet;
+    display: flex;
+    /* justify-content: center; */
+    align-items: center;
+    
+}
+
+.btn_sec {
+    width: fit-content;
+}
+
+.btn {
+    padding: 20px;
+    border-radius: 5px;
+    margin: 20px;
 }
 
 .main_content {
@@ -18,15 +32,24 @@
 
 
 .main_messList {
-    width: 400px;
-    height: 800px;
-    background-color: lawngreen;
+    padding: 20px;
+    width: 500px;
+    height: 100vw;
+    /* background-color: lawngreen; */
+}
+
+
+.mail_item {
+    background-color: antiquewhite;
+    margin: 10px 0;
+    border: solid gray 1px;
 }
 
 .maincontent {
+    padding-top: 20px;
     width: 1000px;
     height: 800px;
-    background-color: khaki;
+    /* background-color: khaki; */
 }
 
 
@@ -36,21 +59,29 @@
     bottom: 0;
     right: 0;
     display: block;
+    height: 700px;
+    width: 600px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 20px;
+
 }
 
 .form-group {
-    /* width: 300px;    */
+    margin: 20px;
 }
 
-.sendEmailSec {
-    height: 700px;
-    width: 600px;
-}
 
 .form-control {
     width: 400px;
+    padding: 20px
+    
 }
 
+#file-input {
+    padding: 20px;
+}
 
 .hidden {
     display: none;
@@ -60,6 +91,8 @@
     cursor: default;
     opacity: 0.7;
 }
+
+
 
 
 .loader {
