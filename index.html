@@ -13,19 +13,18 @@
 
   <div class="main">
     <header class="header">
-      <!--Add buttons to initiate auth sequence and sign out-->
-      <button id="createMail_button">Create New Mail</button>
-      <button id="authorize_button">Authorize</button>
-      <button id="signout_button" onclick="handleSignoutClick()">Sign Out</button>
+
+      <div class="btn_sec">
+        <!--Add buttons to initiate auth sequence and sign out-->
+        <button id="authorize_button" class = "btn">Authorize</button>
+        <button id="signout_button" class = "btn" onclick="handleSignoutClick()">Sign Out</button>
+        <button id="createMail_button" class = "btn">Create New Mail</button>
+      </div>
 
     </header>
 
     <section class="main_content">
-      <nav class="main_labels">
-        <ul id="labels_section">
-
-        </ul>
-      </nav>
+  
       <nav class="main_messList">
         <ul id="mail_list">
 
@@ -38,7 +37,7 @@
     </section>
 
     <div class="sendEmailSec hidden">
-      <form onsubmit="return sendEmail();">
+      <form onsubmit="sendEmail()">
         <div class="modal-body">
           <div class="form-group">
             <input type="email" class="form-control" id="compose-to" placeholder="To" required />
@@ -53,10 +52,33 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" id = "close-button" class="btn btn-default" >Close</button>
+          <button type="button" id="close-button" class="btn btn-default">Close</button>
           <button type="submit" id="send-button" class="btn btn-primary">Send</button>
+          <!-- <input type="file" id="file-input"> -->
+          <input type="file" name="file" id="file-input" multiple>
         </div>
       </form>
+
+      <div class="loader">
+        <div class="loader-inner">
+          <div class="loader-line-wrap">
+            <div class="loader-line"></div>
+          </div>
+          <div class="loader-line-wrap">
+            <div class="loader-line"></div>
+          </div>
+          <div class="loader-line-wrap">
+            <div class="loader-line"></div>
+          </div>
+          <div class="loader-line-wrap">
+            <div class="loader-line"></div>
+          </div>
+          <div class="loader-line-wrap">
+            <div class="loader-line"></div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
 

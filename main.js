@@ -11,11 +11,11 @@ const $$ = document.querySelectorAll.bind(document);
 const createMailBtn = $('#createMail_button')
 const authorizeBtn = $('#authorize_button')
 const signoutBtn = $('#signout_button')
-const labelsSec = $('#labels_section')
 const maiList = $('#mail_list')
 const maincontent = $(".maincontent");
-const senMailSec = $(".sendEmailSec")
+const sendMailSec = $(".sendEmailSec")
 const closeBtn = $("#close-button")
+
 
 
 
@@ -28,7 +28,8 @@ const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/gmail/v1/res
 
 // Authorization scopes required by the API; multiple scopes can be
 // included, separated by spaces.
-const SCOPES = 'https://mail.google.com/ https://www.googleapis.com/auth/gmail.addons.current.message.action https://www.googleapis.com/auth/gmail.addons.current.message.metadata https://www.googleapis.com/auth/gmail.addons.current.message.readonly https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.readonly'
+// const SCOPES = 'https://www.googleapis.com/auth/gmail.compose'
+const SCOPES = "https://mail.google.com/";
 
 let tokenClient;
 let gapiInited = false;
@@ -37,6 +38,7 @@ let gisInited = false;
 createMailBtn.style.visibility = 'hidden';
 authorizeBtn.style.visibility = 'hidden';
 signoutBtn.style.visibility = 'hidden';
+$('.loader').classList.add("hidden")
 
 /**
  * Callback after api.js is loaded.
@@ -99,7 +101,7 @@ authorizeBtn.onclick = function handleAuthClick() {
         createMailBtn.style.visibility = 'visible';
         signoutBtn.style.visibility = 'visible';
         authorizeBtn.innerText = 'Refresh';
-        await listLabels();
+        await listMessages();
     };
 
     if (gapi.client.getToken() === null) {
@@ -117,12 +119,25 @@ signoutBtn.onclick = function handleSignoutClick() {
     if (token !== null) {
         google.accounts.oauth2.revoke(token.access_token);
         gapi.client.setToken('');
-        labels.innerText = '';
         authorizeBtn.innerText = 'Authorize';
         signoutBtn.style.visibility = 'hidden';
+        createMailBtn.style.visibility = 'hidden'
+
+        maiList.innerHTML = '';
+        mails = [];
+        maincontent.innerHTML = ''
     }
 }
 
+
+closeBtn.onclick = function () {
+    senMailSec.classList.add("hidden");
+    $("#compose-to").value = '';
+    $("#compose-subject").value = '';
+    $("#compose-message").value = '';
+    document.getElementById("file-input").value = "";
+
+}
 
 
 
@@ -131,34 +146,11 @@ signoutBtn.onclick = function handleSignoutClick() {
  * are found an appropriate message is printed.
  */
 
-async function listLabels() {
-    let response;
-    try {
-        response = await gapi.client.gmail.users.labels.list({
-            'userId': 'me',
-        });
-    } catch (err) {
-        labelsSec.innerText = err.message;
 
-        return;
-    }
-
-    const labels = response.result.labels;
-    if (!labels || labels.length == 0) {
-        labelsSec.innerText = 'No labels found.';
-        return;
-    }
-    // Flatten to string to display
-    const output = labels.reduce(
-        (str, label) => str + `<li> ${label.name} </li>\n`,
-        'Labels:\n');
-    // console.log(output)
-    labelsSec.innerHTML = output;
-    // nam
-    listMessages();
-}
-
-function listMessages() {
+async function listMessages() {
+    maiList.innerHTML = '';
+    mails = [];
+    maincontent.innerHTML = ''
     var request = gapi.client.gmail.users.messages.list({
         'userId': 'me',
         'labelIds': 'INBOX',
@@ -168,7 +160,7 @@ function listMessages() {
     request.execute(function (response) {
         var messages = response.result.messages;
         if (messages && messages.length > 0) {
-            messages.forEach((message, index) => {
+            messages.forEach((message) => {
                 gapi.client.gmail.users.messages.get({
                     'userId': 'me',
                     'id': message.id
@@ -182,6 +174,7 @@ function listMessages() {
                     console.log(mails)
 
                     var li = document.createElement('li');
+                    li.classList.add("mail_item");
 
                     // Sử dụng textContent để gán nội dung vào phần tử li
                     li.textContent = `${messageContent.sender} - ${messageContent.subject}`;
@@ -191,11 +184,7 @@ function listMessages() {
                     // Thêm thuộc tính có thể bấm cho phần tử li
                     li.style.cursor = 'pointer';
 
-                    // Gán sự kiện click cho phần tử li
-                    // li.addEventListener('click',  () => {
-                    //     // Xử lý sự kiện khi phần tử li được bấm
-                    //     console.log('Clicked on sender:', this.dataset.index);
-                    // });
+                    maincontent.innerHTML = "<p>" + mails[0].body + "</p>"
 
                     li.onclick = function () {
                         let index = this.dataset.index
@@ -212,68 +201,14 @@ function listMessages() {
                 });
             });
 
-
-
-            // for (let i = messages.length - 1; i >= 0; i--) {
-            //     // Get the ID of the first message
-            //     getMessage(messages[i].id, i); // Get the content of the message
-            // }
-
         } else {
             maiList.innerHTML = "<p> No messages found.</p>";
         }
 
-        // getMessage("188c54a78d178d10");
 
-    }).catch(function (error) {
-        console.error('Error listing messages: ', error);
-    });
+    })
 }
 
-// Get the content of a specific message
-function getMessage(messageId, index) {
-    gapi.client.gmail.users.messages.get({
-        'userId': 'me',
-        'id': messageId
-    }).then(function (response) {
-        var message = response.result;
-        // console.log((message))
-        var messageContent = parseMessageContent(message); // Parse the message content
-        // console.log("content", JSON.stringify(messageContent, null, 2))
-        // var messageObject = JSON.stringify(messageContent, null, 2);
-        mails.push(messageContent);
-        console.log(mails)
-
-        var li = document.createElement('li');
-
-        // Sử dụng textContent để gán nội dung vào phần tử li
-        li.textContent = `${messageContent.sender} - ${messageContent.subject}`;
-
-        li.dataset.index = String(mails.length - 1);
-
-        // Thêm thuộc tính có thể bấm cho phần tử li
-        li.style.cursor = 'pointer';
-
-        // Gán sự kiện click cho phần tử li
-        // li.addEventListener('click',  () => {
-        //     // Xử lý sự kiện khi phần tử li được bấm
-        //     console.log('Clicked on sender:', this.dataset.index);
-        // });
-
-        li.onclick = function () {
-            let index = this.dataset.index
-            console.log('Clicked on sender:', this.dataset.index);
-            maincontent.innerHTML = "<p>" + mails[index].body + "</p>"
-        }
-
-        // Thêm phần tử li vào một phần tử gốc
-        maiList.appendChild(li);
-
-
-    }).catch(function (error) {
-        console.error('Error getting message: ', error);
-    });
-}
 
 // Parse the content of the message
 function parseMessageContent(message) {
@@ -296,7 +231,7 @@ function parseMessageContent(message) {
         subject: subject,
         sender: sender,
         body: body
-    };  
+    };
 }
 
 
@@ -329,53 +264,125 @@ function getHTMLPart(arr) {
 
 
 createMailBtn.onclick = function () {
-    senMailSec.classList.remove("hidden");
+    sendMailSec.classList.remove("hidden");
 }
 
+
+//feature/send_attachments
+
+function composeTidy() {
+    console.log("Đã gửi mail:");
+    $('.loader').classList.add("hidden")
+    alert("Đã gửi mail!");
+    $("#compose-to").value = ''
+    $("#compose-subject").value = ''
+    $("#compose-message").value = ''
+    document.getElementById("file-input").value = "";
+    $('#send-button').classList.remove('disabled');
+
+}
 
 
 
 function sendEmail() {
-    $('#send-button').classList.add("disabled")
-    sendMessage(
-        {
-            'To': $("#compose-to").value,
-            'Subject': $("#compose-subject").value
-        },
-        $("#compose-message").value,
-        composeTidy
-    );
+    window.event.preventDefault();
+    $('#send-button').classList.add("disabled");
+    $('.loader').classList.remove("hidden")
 
-    return false;
-}
+    var recipient = $("#compose-to").value;
+    var subject = $("#compose-subject").value;
+    var message = $("#compose-message").value
+    var fileInput = document.getElementById("file-input");
+    var file = fileInput.files[0];
 
-function sendMessage(headers_obj, message, callback) {
-    var email = '';
 
-    for (var header in headers_obj)
-        email += header += ": " + headers_obj[header] + "\r\n";
+    console.log(file === undefined);
 
-    email += "\r\n" + message;
+    if (!file) {
+        var emailContent = {
+            to: recipient,
+            subject: subject,
+            message: message
+        };
 
-    var sendRequest = gapi.client.gmail.users.messages.send({
-        'userId': 'me',
-        'resource': {
-            'raw': window.btoa(email).replace(/\+/g, '-').replace(/\//g, '_')
+        var email = '';
+
+        // email += 'From: ' + my_mail + '\r\n';
+        email += 'To: ' + emailContent.to + '\r\n';
+        email += 'Subject: ' + emailContent.subject + '\r\n';
+        email += 'Content-Type: text/plain; charset="UTF-8"\r\n';
+        email += '\r\n';
+        email += emailContent.message;
+
+        
+        try {
+            var encodedEmail = btoa(email).replace(/\+/g, '-').replace(/\//g, '_');
+        } catch (error) {
+            composeTidy();
+            alert(error);
+            
         }
-    });
+        console.log(encodedEmail);
 
-    return sendRequest.execute(callback);
+        gapi.client.gmail.users.messages.send({
+            'userId': 'me',
+            'raw': encodedEmail
+        }).then(function (response) {
+            console.log('Email sent:', response);
+            composeTidy();
+        }, function (error) {
+            console.log('Error sending email:', error);
+        });
+    }
+    else {
+        var reader = new FileReader();
+        reader.onload = function () {
+            var fileContent = reader.result.split(',')[1];
+
+            var boundary = 'boundary-example';
+
+            var emailContent =
+                'From: Your Name <your-email@example.com>\r\n' +
+                'To: ' + recipient + '\r\n' +
+                'Subject: ' + subject + '\r\n' +
+                'Content-Type: multipart/mixed; boundary="' + boundary + '"\r\n' +
+                '\r\n' +
+                '--' + boundary + '\r\n' +
+                'Content-Type: text/plain; charset="UTF-8"\r\n' +
+                '\r\n' +
+                message + '\r\n' +
+                '\r\n' +
+                '--' + boundary + '\r\n' +
+                'Content-Type: ' + file.type + '; name="' + file.name + '"\r\n' +
+                'Content-Disposition: attachment; filename="' + file.name + '"\r\n' +
+                'Content-Transfer-Encoding: base64\r\n' +
+                '\r\n' +
+                fileContent + '\r\n' +
+                '\r\n' +
+                '--' + boundary + '--';
+
+            try {
+                var encodedEmail = btoa(emailContent).replace(/\+/g, '-').replace(/\//g, '_');
+            } catch (error) {
+                composeTidy();
+                alert(error);
+                
+            }
+            
+
+            gapi.client.gmail.users.messages.send({
+                'userId': 'me',
+                'raw': encodedEmail
+            }).then(function (response) {
+                console.log('Email sent:', response);
+                composeTidy();
+            }, function (error) {
+                console.log('Error sending email:', error);
+            });
+        };
+
+        reader.readAsDataURL(file);
+    }
+
+    
 }
-
-closeBtn.onclick = function () {
-    senMailSec.classList.add("hidden")
-}
-
-function composeTidy() {
-
-    $("#compose-to").value = ''
-    $("#compose-subject").value = ''
-    $("#compose-message").value = ''
-    $('#send-button').classList.remove('disabled');
-}
-
