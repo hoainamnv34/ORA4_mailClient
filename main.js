@@ -269,75 +269,6 @@ createMailBtn.onclick = function () {
 
 
 //feature/send_attachments
-function sendMail() {
-    window.event.preventDefault();
-    $('#send-button').classList.add("disabled");
-    $('.loader').classList.remove("hidden")
-
-    var to = $("#compose-to").value;
-    var subject = $("#compose-subject").value;
-    var message = $("#compose-message").value
-    var file = document.getElementById("file-input").files[0];
-    console.log(file);
-
-    if (file) {
-        var reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onloadend = function () {
-            var attachment = reader.result.split(",")[1];
-            var boundary = "my_email_boundary";
-            var nl = "\r\n";
-            var attachmentContent = btoa(attachment);
-            var attachmentName = file.name;
-            var attachmentType = file.type;
-            var messageBody = nl + nl + message;
-            var mime = [
-                "MIME-Version: 1.0",
-                "From: muougiapquetui@gmail.com",
-                "To: " + to,
-                "Subject: " + subject,
-                'Content-Type: multipart/mixed; boundary="' + boundary + '"',
-            ].join(nl);
-            var body = [
-                "--" + boundary,
-                'Content-Type: text/plain; charset="UTF-8"',
-                "Content-Transfer-Encoding: 7bit",
-                "",                 
-                messageBody,
-                "",
-                "--" + boundary,
-                "Content-Type: " + attachmentType + '; name="' + attachmentName + '"',
-                "MIME-Version: 1.0",
-                'Content-Disposition: attachment; filename="' + attachmentName + '"',
-                "Content-Transfer-Encoding: base64",
-                "",
-                attachmentContent,
-                "",
-                "--" + boundary + "--",
-            ].join(nl);
-
-            var request = gapi.client.gmail.users.messages.send({
-                userId: "me",
-                resource: {
-                    raw: window.btoa(mime + nl + nl + body).replace(/\+/g, '-').replace(/\//g, '_')
-                },
-            });
-            request.execute(composeTidy);
-
-
-        };
-    } else {
-        sendMessage(
-            {
-                'To': $("#compose-to").value,
-                'Subject': $("#compose-subject").value
-            },
-            $("#compose-message").value,
-            composeTidy
-        );
-    }
-};
-
 
 function composeTidy() {
     console.log("Đã gửi mail:");
@@ -353,25 +284,105 @@ function composeTidy() {
 
 
 
-function sendMessage(headers_obj, message, callback) {
-    var email = '';
+function sendEmail() {
+    window.event.preventDefault();
+    $('#send-button').classList.add("disabled");
+    $('.loader').classList.remove("hidden")
 
-    for (var header in headers_obj)
-        email += header += ": " + headers_obj[header] + "\r\n";
+    var recipient = $("#compose-to").value;
+    var subject = $("#compose-subject").value;
+    var message = $("#compose-message").value
+    var fileInput = document.getElementById("file-input");
+    var file = fileInput.files[0];
 
-    email += "\r\n" + message;
 
-    var sendRequest = gapi.client.gmail.users.messages.send({
-        'userId': 'me',
-        'resource': {
-            'raw': window.btoa(email).replace(/\+/g, '-').replace(/\//g, '_')
+    console.log(file === undefined);
+
+    if (!file) {
+        var emailContent = {
+            to: recipient,
+            subject: subject,
+            message: message
+        };
+
+        var email = '';
+
+        // email += 'From: ' + my_mail + '\r\n';
+        email += 'To: ' + emailContent.to + '\r\n';
+        email += 'Subject: ' + emailContent.subject + '\r\n';
+        email += 'Content-Type: text/plain; charset="UTF-8"\r\n';
+        email += '\r\n';
+        email += emailContent.message;
+
+        
+        try {
+            var encodedEmail = btoa(email).replace(/\+/g, '-').replace(/\//g, '_');
+        } catch (error) {
+            composeTidy();
+            alert(error);
+            
         }
-    });
+        console.log(encodedEmail);
 
-    return sendRequest.execute(callback);
+        gapi.client.gmail.users.messages.send({
+            'userId': 'me',
+            'raw': encodedEmail
+        }).then(function (response) {
+            console.log('Email sent:', response);
+            composeTidy();
+        }, function (error) {
+            console.log('Error sending email:', error);
+        });
+    }
+    else {
+        var reader = new FileReader();
+        reader.onload = function () {
+            var fileContent = reader.result.split(',')[1];
 
+            var boundary = 'boundary-example';
+
+            var emailContent =
+                'From: Your Name <your-email@example.com>\r\n' +
+                'To: ' + recipient + '\r\n' +
+                'Subject: ' + subject + '\r\n' +
+                'Content-Type: multipart/mixed; boundary="' + boundary + '"\r\n' +
+                '\r\n' +
+                '--' + boundary + '\r\n' +
+                'Content-Type: text/plain; charset="UTF-8"\r\n' +
+                '\r\n' +
+                message + '\r\n' +
+                '\r\n' +
+                '--' + boundary + '\r\n' +
+                'Content-Type: ' + file.type + '; name="' + file.name + '"\r\n' +
+                'Content-Disposition: attachment; filename="' + file.name + '"\r\n' +
+                'Content-Transfer-Encoding: base64\r\n' +
+                '\r\n' +
+                fileContent + '\r\n' +
+                '\r\n' +
+                '--' + boundary + '--';
+
+            try {
+                var encodedEmail = btoa(emailContent).replace(/\+/g, '-').replace(/\//g, '_');
+            } catch (error) {
+                composeTidy();
+                alert(error);
+                
+            }
+            
+
+            gapi.client.gmail.users.messages.send({
+                'userId': 'me',
+                'raw': encodedEmail
+            }).then(function (response) {
+                console.log('Email sent:', response);
+                composeTidy();
+            }, function (error) {
+                console.log('Error sending email:', error);
+            });
+        };
+
+        reader.readAsDataURL(file);
+    }
 
     
 }
-
-
